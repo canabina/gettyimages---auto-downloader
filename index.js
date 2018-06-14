@@ -27,13 +27,12 @@ const params = {
             LOGIN: {
                 method: 'POST',
                 path: '/account/login',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: {}
             },
             ASSET_TO_MEDIA: {
                 method: 'GET',
                 headers: {
+                    'Accept': 'application/json',
                     'x-user-mode': 'owner_administrator'
                 }
             }
@@ -64,7 +63,7 @@ const getRequestOptions = (request_name, form_data = {}, qs = {}, headers = {}, 
     const method = params.api.methods[request_name];
     return {
         body: form_data,
-        uri: `${params.api.url}/${params.api.v}${custom.path ? custom.path : method.path}`,
+        uri: `${params.api.url.replace('\r', '')}/${params.api.v}${custom.path ? custom.path : method.path}`,
         method: method.method,
         headers: Object.assign(params.api.headers, method.headers, headers),
         qs: Object.assign(params.api.qs, qs),
@@ -72,12 +71,12 @@ const getRequestOptions = (request_name, form_data = {}, qs = {}, headers = {}, 
     }
 };
 const downloadImage = (uri, ids) => {
-    const downloadOptions = { url: uri, resolveWithFullResponse: true };
+    const downloadOptions = { url: uri, resolveWithFullResponse: true, encoding: null };
     let image_name = `${params.image_path_name}/${ids.asset_id}-${ids.media_id}`;
 
     return rp (downloadOptions).then(async (res) => {
         const headers = res.headers,
-            body = res.body.toString(params.charset_list);
+            body = res.body;
         image_name = `${image_name}-${headers[params.aws_true_filename_header_reference_name]}`.replace('\r', '');
         return fs.writeFileSync(image_name, body, 'binary');
     }).then(() => console.log(`${params.success.ASSET_WAS_DONWLOAD} to ${image_name}`));

@@ -1,8 +1,6 @@
 const fs = require ('fs');
 const rp = require ('request-promise');
-const download = require ('image-downloader');
-const md5 = require ('md5');
-const {API_KEY, USERNAME, PASSWORD} = process.env;
+const {API_KEY, USERNAME, PASSWORD, API_URL} = process.env;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const params = {
     args: {},
@@ -19,9 +17,8 @@ const params = {
       ASSET_TO_MEDIA: 'ASSET_TO_MEDIA'
     },
     api: {
-        url: 'https://api.gettyimages.com/mms',
+        url: API_URL || 'https://api.gettyimages.com/mms',
         v: 'v1',
-        port: 80,
         headers: {
           'Api-Key': API_KEY
         },
@@ -42,6 +39,7 @@ const params = {
             }
         }
     },
+    aws_true_filename_header_reference_name: 'x-amz-meta-original-file-name',
     image_path_name: 'images',
     image_type: 'jpg',
     temporary_payload: '',
@@ -73,17 +71,23 @@ const getRequestOptions = (request_name, form_data = {}, qs = {}, headers = {}, 
         json: json
     }
 };
-const downloadImage = uri => {
+const downloadImage = (uri, ids) => {
     const time = new Date().getTime(),
-        image_name = `${params.image_path_name}/${md5(`${uri}${time}`)}.${params.image_type}`,
-        downloadOptions = { url: uri, dest: image_name };
-    return download.image (downloadOptions).then(() => console.log(`${params.success.ASSET_WAS_DONWLOAD} to ${downloadOptions.dest}`))
+        downloadOptions = { url: uri, resolveWithFullResponse: true };
+    let image_name = `${params.image_path_name}/${time}-${ids.asset_id}-${ids.media_id}`;
+
+    return rp (downloadOptions).then(async (res) => {
+        const headers = res.headers,
+            body = res.body.toString(params.charset_list);
+        image_name = `${image_name}-${headers[params.aws_true_filename_header_reference_name]}`.replace('\r', '');
+        return fs.writeFileSync(image_name, body, 'binary');
+    }).then(() => console.log(`${params.success.ASSET_WAS_DONWLOAD} to ${image_name}`));
 };
-const linksWasGet = body => {
+const linksWasGet = (body, ids) => {
     if (!isSuccessRequest(body) || body.split) return ;
     const link = body.data || body;
-    if (Array.isArray(link)) link.map(linksWasGet);
-    return downloadImage(link);
+    if (Array.isArray(link)) link.map(linksWasGet.bind(null, link, ids));
+    return downloadImage(link, ids);
 };
 const isSuccessRequest = json => json.info.success;
 const processing = async () => {
@@ -106,7 +110,7 @@ const processing = async () => {
 
     params.data_list.map(item => params.download_processing.push(
         rp (getRequestOptions (params.api_methods.ASSET_TO_MEDIA, {}, {}, {}, true, { path: `/assets/${item.asset_id}/media/files/${item.media_id}`}))
-            .then(items => params.image_download_processing.push(linksWasGet(items)))
+            .then(items => params.image_download_processing.push(linksWasGet(items, item)))
     ));
 
     return Promise

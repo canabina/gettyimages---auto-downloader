@@ -72,9 +72,8 @@ const getRequestOptions = (request_name, form_data = {}, qs = {}, headers = {}, 
     }
 };
 const downloadImage = (uri, ids) => {
-    const time = new Date().getTime(),
-        downloadOptions = { url: uri, resolveWithFullResponse: true };
-    let image_name = `${params.image_path_name}/${time}-${ids.asset_id}-${ids.media_id}`;
+    const downloadOptions = { url: uri, resolveWithFullResponse: true };
+    let image_name = `${params.image_path_name}/${ids.asset_id}-${ids.media_id}`;
 
     return rp (downloadOptions).then(async (res) => {
         const headers = res.headers,

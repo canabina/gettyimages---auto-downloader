@@ -1,7 +1,7 @@
 **To run** 
 ``` bash
 $ npm install
-$ API_KEY=${something} USERNAME=${something} PASSWORD=${something} node index.js -i ${list to assets ids} -o ${output path mane}
+$ API_KEY=${something} USERNAME=${something} PASSWORD=${something} API_URL=${something} node index.js -i ${list to assets ids} -o ${output path mane}
 ```
 
 **Assets list structure**

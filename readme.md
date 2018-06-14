@@ -4,4 +4,5 @@ API_KEY=${something} USERNAME=${something} PASSWORD=${something} node index.js -
 ```
 
 **Assets list structure**
+
 ${assetId}/${mediaId} \n

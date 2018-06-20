@@ -71,7 +71,7 @@ const getRequestOptions = (request_name, form_data = {}, qs = {}, headers = {}, 
         qs: Object.assign(params.api.qs, qs),
         json: json
     };
-    if (form_data) options.body = form_data;
+    if (Object.keys(form_data).length) options.body = form_data;
     return options;
 };
 
